@@ -1,3 +1,3 @@
-import { API } from "@env";
+import { API_URL as API } from "@env";
 
 export default { API };

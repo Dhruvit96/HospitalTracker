@@ -36,7 +36,7 @@ module.exports = class HospitalController extends BaseController {
       let encryptedPassword = await bcrypt.hash(password, 10);
       // Create hospital
       let hospital = new Hospital({
-        email, password: encryptedPassword, name: invitation.name,
+        email: email.toLowerCase(), password: encryptedPassword, name: invitation.name,
         address: invitation.address,
         contact_num,
         city: invitation.city.toLowerCase()
@@ -74,7 +74,7 @@ module.exports = class HospitalController extends BaseController {
       // Checking required field
       if (!email || !password)
         throw new BadRequest("Email and password are required.");
-      let hospital = await Hospital.findOne({ email });
+      let hospital = await Hospital.findOne({ email: email.toLowerCase() });
       let obj = hospital?.toObject();
       // Checking password// Checking password
       if (
