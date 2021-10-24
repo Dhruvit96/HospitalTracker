@@ -1,3 +1,3 @@
 module.exports = {
-  authenticate: require("./authenticate"),
+  authenticate: require("./authenticate"), imageUpload: require("./imageUpload"),
 };

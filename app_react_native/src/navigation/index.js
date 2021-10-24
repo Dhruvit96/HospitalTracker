@@ -14,6 +14,7 @@ import LoginScreen from "../screens/LoginScreen";
 import SearchScreen from "../screens/SearchScreen";
 import ChangePasswordScreen from "../screens/ChangePasswordScreen";
 import AddBeds from "../screens/AddBeds";
+import DoctorScreen from "../screens/DoctorScreen";
 import FAQ from "../screens/FAQ";
 import { useDispatch } from "react-redux";
 import { userActions } from "../actions";
@@ -61,16 +62,17 @@ const Drawer = createDrawerNavigator();
 function MyDrawer() {
   return (
     <Drawer.Navigator
-      drawerContent={(props) => <CustomDrawerContent  {...props} />}
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
     >
       <Drawer.Screen name="Add Beds" component={AddBeds} />
+      <Drawer.Screen name="Doctors data" component={DoctorScreen} />
       <Drawer.Screen name="Change Password" component={ChangePasswordScreen} />
-    </Drawer.Navigator >
+    </Drawer.Navigator>
   );
 }
 
 const index = () => {
-  const loggedIn = useSelector(state => state.authentication.loggedIn);
+  const loggedIn = useSelector((state) => state.authentication.loggedIn);
   return (
     <NavigationContainer>
       {!loggedIn ? <UserStack /> : <MyDrawer />}

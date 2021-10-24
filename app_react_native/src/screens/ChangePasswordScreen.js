@@ -10,7 +10,8 @@ function ChangePasswordScreen({ navigation }) {
   const [current_password, setcurrent_password] = React.useState("");
   const [new_password, setnew_password] = React.useState("");
   const [confirm_password, setconfirm_password] = React.useState("");
-  const user = useSelector(state => state.authentication.user)
+  const [isLoading, setIsLoading] = React.useState(false);
+  const user = useSelector((state) => state.authentication.user);
   const changePassword = (current_password, new_password) => {
     if (new_password != confirm_password) {
       alert(
@@ -18,24 +19,31 @@ function ChangePasswordScreen({ navigation }) {
       );
       return;
     }
+    setIsLoading(true);
     fetch(`${config.API}/hospital/changePassword`, {
       method: "Post",
-      headers: { "Content-Type": "application/json", 'Authorization': 'Bearer ' + user.token },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + user.token,
+      },
       body: JSON.stringify({
         newPassword: new_password,
-        oldPassword: current_password
-      })
-    }).then(handleResponse).then(
-      () => {
+        oldPassword: current_password,
+      }),
+    })
+      .then(handleResponse)
+      .then(() => {
         setconfirm_password("");
         setcurrent_password("");
         setnew_password("");
         alert("Password changed.");
-      }
-    ).catch((err) => {
-      alert(err);
-      this.setState({ loading: false });
-    });
+      })
+      .catch((err) => {
+        alert(err);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
   return (
     <>
@@ -76,6 +84,7 @@ function ChangePasswordScreen({ navigation }) {
           />
           <Button
             title="Change Your Password"
+            loading={isLoading}
             onPress={() => changePassword(current_password, new_password)}
           />
         </ScrollView>

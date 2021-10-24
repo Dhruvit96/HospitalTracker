@@ -6,6 +6,7 @@ import {
   SafeAreaView,
   Text,
   FlatList,
+  Image,
   TouchableOpacity,
 } from "react-native";
 import { Button, SearchBar, Overlay } from "react-native-elements";
@@ -17,38 +18,56 @@ import config from "../../config";
 const ShowDetail = ({ item }) => {
   const [isShowDetail, setIsShowDetail] = useState(false);
   const [data, setData] = useState({ total_beds: 0 });
+  const [doctorData, setDoctorData] = useState([]);
   useEffect(() => {
     fetch(`${config.API}/data/${item.id}`, {
       method: "Get",
       headers: { "Content-Type": "application/json" },
-    }).then(handleResponse).then(
-      (res) => {
+    })
+      .then(handleResponse)
+      .then((res) => {
         if (res.data.isDataAdded) {
           setData({
             recovery_rate: res.data.recovery_rate.toString(),
             total_available_beds: res.data.total_available_beds.toString(),
             total_beds: res.data.total_beds.toString(),
             total_special_ward: res.data.total_special_ward.toString(),
-            available_special_wards: res.data.available_special_wards.toString(),
-            available_general_wards: res.data.available_general_wards.toString(),
+            available_special_wards:
+              res.data.available_special_wards.toString(),
+            available_general_wards:
+              res.data.available_general_wards.toString(),
           });
         }
-      }
-    ).catch((err) => {
-      alert(err);
+      })
+      .catch((err) => {
+        alert(err);
+      });
+    fetch(`${config.API}/doctor/${item.id}`, {
+      method: "Get",
+      headers: { "Content-Type": "application/json" },
     })
-  }, [])
+      .then(handleResponse)
+      .then((res) => {
+        if (res.data.doctors) {
+          setDoctorData(res.data.doctors);
+        }
+      })
+      .catch((err) => {
+        alert(err);
+      });
+  }, []);
   return (
     <Card>
       <Text style={{ fontWeight: "bold", fontSize: 17 }}>{item.name}</Text>
       <Text>
-        {item.total_beds != 0 ? (
-          <>Total Available Beds: {item.total_available_beds} </>
-        ) : (
-          <Text style={{ color: "red" }}>
-            This Hospital has not added data yet.{" "}
-          </Text>
-        )}
+        {"Full Address: " + item.address}
+        {"\n"}
+        {"\n"}
+        {"City: " + item.city}
+        {"\n"}
+        {"\n"}
+        {"Contact Number: " + item.contact_num}
+        {"\n"}
       </Text>
       <TouchableOpacity onPress={() => setIsShowDetail(!isShowDetail)}>
         <Text style={{ color: "blue" }}>Show details</Text>
@@ -72,10 +91,9 @@ const ShowDetail = ({ item }) => {
             {"Contact Number: " + item.contact_num}
             {"\n"}
           </Text>
-          {data.total_beds != 0 ? (
+          {data.total_beds ? (
             <>
               <Text>
-
                 {"Recovery Rate: " + data.recovery_rate + "%"}
                 {"\n"}
                 {"\n"}
@@ -95,10 +113,37 @@ const ShowDetail = ({ item }) => {
               </Text>
             </>
           ) : (
-            <Text style={{ alignSelf: "center", fontSize: 18, paddingTop: 30, color: 'red' }}>
+            <Text
+              style={{
+                alignSelf: "center",
+                fontSize: 18,
+                paddingTop: 30,
+                color: "red",
+              }}
+            >
               Other Data is not Added by the Hospital yet.
             </Text>
           )}
+          <FlatList
+            data={doctorData}
+            horizontal
+            contentContainerStyle={{ flexGrow: 1, padding: 20 }}
+            renderItem={({ item }) => (
+              <View style={{ padding: 5 }}>
+                <Image
+                  source={{ uri: config.URL + item.image }}
+                  style={{ height: 100, width: 75 }}
+                />
+                <Text style={{ alignSelf: "center" }}>
+                  {item.name}
+                  {"\n"}
+                  {item.degree}
+                  {"\n"}
+                  {item.speciality}
+                </Text>
+              </View>
+            )}
+          />
         </Overlay>
       </TouchableOpacity>
     </Card>
@@ -125,51 +170,62 @@ export default class App extends React.Component {
   }
 
   fetchUsers = () => {
-    let params = this.state.search.length > 0 ? "name=" + this.state.search : "";
-    params = this.state.enable ? "city=" + this.state.city : "";
+    let params =
+      this.state.search.length > 0 ? "name=" + this.state.search + "&" : "";
+    this.state.enable
+      ? (params = params + "city=" + this.state.city)
+      : (params = params);
     fetch(`${config.API}/hospital?${params}`, {
       method: "Get",
       headers: { "Content-Type": "application/json" },
-    }).then(handleResponse).then(
-      (res) => {
-        this.setState({ users: res.data.hospitals })
-      }
-    ).catch((err) => {
-      alert(err);
-    });
+    })
+      .then(handleResponse)
+      .then((res) => {
+        this.setState({ users: res.data.hospitals });
+      })
+      .catch((err) => {
+        alert(err);
+      });
   };
 
   fetchMoreUsers = () => {
-    let params = this.state.search.length > 0 ? "name=" + this.state.search : "";
-    params = this.state.enable ? "city=" + this.state.city : "";
+    let params =
+      this.state.search.length > 0 ? "name=" + this.state.search + "&" : "";
+    this.state.enable
+      ? (params = params + "city=" + this.state.city + "&")
+      : (params = params);
     params = "pageNumber=" + this.state.pageNumber;
     fetch(`${config.API}/hospital?${params}`, {
       method: "Get",
       headers: { "Content-Type": "application/json" },
-    }).then(handleResponse).then(
-      (res) => {
-        let update = { users: [...this.state.users, ...res.data.hospitals], pageNumber: this.state.pageNumber + 1 };
-        if (res.data.totalHospitals < 10)
-          update.endReached = true;
+    })
+      .then(handleResponse)
+      .then((res) => {
+        let update = {
+          users: [...this.state.users, ...res.data.hospitals],
+          pageNumber: this.state.pageNumber + 1,
+        };
+        if (res.data.totalHospitals < 10) update.endReached = true;
         this.setState(update);
-      }
-    ).catch((err) => {
-      alert(err);
-    });
+      })
+      .catch((err) => {
+        alert(err);
+      });
   };
 
   getCities = () => {
     fetch(`${config.API}/city`, {
       method: "Get",
       headers: { "Content-Type": "application/json" },
-    }).then(handleResponse).then(
-      (res) => {
-        this.setState({ cities: res.data })
+    })
+      .then(handleResponse)
+      .then((res) => {
+        this.setState({ cities: res.data });
         this.setState({ city: res.data[0] });
-      }
-    ).catch((err) => {
-      console.error(err);
-    });
+      })
+      .catch((err) => {
+        console.error(err);
+      });
   };
 
   toggleOverlay = () => {
@@ -203,7 +259,9 @@ export default class App extends React.Component {
                   <Text style={{ fontSize: 18 }}>No Results Found</Text>
                 </View>
               )}
-              onEndReached={() => !this.state.endReached && this.fetchMoreUsers()}
+              onEndReached={() =>
+                !this.state.endReached && this.fetchMoreUsers()
+              }
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => <ShowDetail item={item} />}
             />
@@ -216,11 +274,7 @@ export default class App extends React.Component {
             onBackdropPress={this.toggleOverlay}
             overlayStyle={{ height: "40%", width: "70%" }}
           >
-            <Text
-              style={styles.overlayText}
-            >
-              Select City:
-            </Text>
+            <Text style={styles.overlayText}>Select City:</Text>
             <View
               style={{
                 borderWidth: 1,
